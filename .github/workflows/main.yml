@@ -1,0 +1,36 @@
+name: Guild Scraper Automation
+on:
+  schedule:
+    - cron: '0 */4 * * *' # 4시간마다 자동 실행
+  workflow_dispatch: # 수동 실행 버튼
+
+permissions:
+  contents: write
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 저장소 불러오기
+      uses: actions/checkout@v3
+
+    - name: 파이썬 환경 세팅
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: 필요 라이브러리 설치
+      run: pip install requests beautifulsoup4 selenium
+
+    - name: 크롤러 실행
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      run: python scraper.py
+
+    - name: 최신 데이터 갱신 저장
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add last_data.txt || true
+        git commit -m "Update history" || echo "변동사항 없음"
+        git push
